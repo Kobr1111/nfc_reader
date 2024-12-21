@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>NFC Reader</h1>
+    <button id="readNFC">Scan NFC Tag</button>
+    <p id="status">Click the button to scan an NFC tag.</p>
+    
+    <script>
+        document.getElementById("readNFC").addEventListener("click", async () => {
+            const statusElement = document.getElementById("status");
+
+            // Проверяем, поддерживается ли Web NFC
+            if (!("NDEFReader" in window)) {
+                statusElement.textContent = "Web NFC is not supported in this browser.";
+                return;
+            }
+
+            try {
+                const ndef = new NDEFReader();
+                statusElement.textContent = "Ready to scan. Bring an NFC tag close.";
+
+                // Начало сканирования
+                await ndef.scan();
+                ndef.onreading = (event) => {
+                    const decoder = new TextDecoder();
+                    const records = event.message.records;
+
+                    for (const record of records) {
+                        if (record.recordType === "url") {
+                            const url = decoder.decode(record.data);
+                            statusElement.textContent = `Opening URL: ${url}`;
+                            window.location.href = url; // Открыть HTML-файл с метки
+                        } else if (record.recordType === "text") {
+                            const text = decoder.decode(record.data);
+                            statusElement.textContent = `Tag contains text: ${text}`;
+                        } else {
+                            statusElement.textContent = "NFC Tag read, but unsupported type.";
+                        }
+                    }
+                };
+            } catch (error) {
+                statusElement.textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
